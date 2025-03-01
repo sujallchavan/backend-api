@@ -1,69 +1,54 @@
 const express = require("express");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const Customer = require("../models/Customer");
+
 const router = express.Router();
-const connectDB = require("../server");
-const mongoose = require("mongoose");
 
-// Define user schema
-const UserSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  role: {
-    type: String,
-    enum: ["customer", "supplier", "manufacturer"],
-    required: true,
-  },
-});
-
-// Function to get user model based on role
-const getUserModel = (role) => {
-  const db = connectDB(role);
-  return db.model("User", UserSchema);
-};
-
-// Register User
+// Register Customer
 router.post("/register", async (req, res) => {
-  const { email, password, role } = req.body;
-
-  if (!email || !password || !role) {
-    return res.status(400).json({ message: "All fields are required" });
-  }
-
   try {
-    const User = getUserModel(role);
-    const existingUser = await User.findOne({ email });
+    const { name, email, password } = req.body;
 
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
-    }
+    let customer = await Customer.findOne({ email });
+    if (customer) return res.status(400).json({ msg: "User already exists" });
 
-    const newUser = new User({ email, password, role });
-    await newUser.save();
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    res.json({ message: "User registered successfully" });
+    customer = new Customer({ name, email, password: hashedPassword });
+    await customer.save();
+
+    res.status(201).json({ msg: "User registered successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ msg: "Server error" });
   }
 });
 
-// Login User
+// Login Customer
 router.post("/login", async (req, res) => {
-  const { email, password, role } = req.body;
-
-  if (!email || !password || !role) {
-    return res.status(400).json({ message: "All fields are required" });
-  }
-
   try {
-    const User = getUserModel(role);
-    const user = await User.findOne({ email, password });
+    const { email, password } = req.body;
 
-    if (!user) {
-      return res.status(400).json({ message: "Invalid email or password" });
-    }
+    let customer = await Customer.findOne({ email });
+    if (!customer) return res.status(400).json({ msg: "Invalid Credentials" });
 
-    res.json({ message: "Login successful", role: user.role });
+    const isMatch = await bcrypt.compare(password, customer.password);
+    if (!isMatch) return res.status(400).json({ msg: "Invalid Credentials" });
+
+    const token = jwt.sign({ id: customer._id }, "secretKey", {
+      expiresIn: "1h",
+    });
+
+    res.json({
+      token,
+      customer: {
+        id: customer._id,
+        name: customer.name,
+        email: customer.email,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ msg: "Server error" });
   }
 });
 
