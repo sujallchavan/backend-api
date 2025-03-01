@@ -6,8 +6,8 @@ const router = express.Router();
 // Signup Route
 router.post("/signup", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    const newCustomer = new Customer({ name, email, password });
+    const { name, email, phone_number, password } = req.body; // ✅ Added phone_number
+    const newCustomer = new Customer({ name, email, phone_number, password });
     await newCustomer.save();
     res.status(201).json({ msg: "Signup successful!" });
   } catch (error) {
@@ -16,10 +16,10 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// Fetch All Customers Route (New)
+// Fetch All Customers Route
 router.get("/all", async (req, res) => {
   try {
-    const customers = await Customer.find(); // Fetch all customers
+    const customers = await Customer.find();
     res.json(customers);
   } catch (error) {
     console.error("Error fetching customers:", error);
