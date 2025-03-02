@@ -55,4 +55,15 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// ✅ Ensure this route exists
+router.get("/all", async (req, res) => {
+  try {
+    const customers = await Customer.find({});
+    res.json(customers);
+  } catch (error) {
+    console.error("Fetch Error:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
 module.exports = router;
