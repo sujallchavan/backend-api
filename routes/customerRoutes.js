@@ -6,7 +6,7 @@ const router = express.Router();
 // Signup Route
 router.post("/signup", async (req, res) => {
   try {
-    const { name, email, phone_number, password } = req.body;
+    const { name, email, location, phone_number, password } = req.body;
 
     // Check if customer already exists
     const existingCustomer = await Customer.findOne({ email });
@@ -14,7 +14,13 @@ router.post("/signup", async (req, res) => {
       return res.status(400).json({ msg: "Customer already exists" });
     }
 
-    const newCustomer = new Customer({ name, email, phone_number, password });
+    const newCustomer = new Customer({
+      name,
+      email,
+      location,
+      phone_number,
+      password,
+    });
     await newCustomer.save();
     res.status(201).json({ msg: "Signup successful!" });
   } catch (error) {
