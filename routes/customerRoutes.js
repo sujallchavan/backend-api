@@ -94,15 +94,15 @@ router.get("/history/:email", async (req, res) => {
   }
 });
 
-router.get("/login-history/:email", async (req, res) => {
-  try {
-    const history = await LoginHistory.find({ email: req.params.email });
-    res.status(200).json(history);
-  } catch (error) {
-    console.error("❌ Fetch Error:", error);
-    res.status(500).json({ msg: "Server error" });
-  }
-});
+// router.get("/login-history/:email", async (req, res) => {
+//   try {
+//     const history = await LoginHistory.find({ email: req.params.email });
+//     res.status(200).json(history);
+//   } catch (error) {
+//     console.error("❌ Fetch Error:", error);
+//     res.status(500).json({ msg: "Server error" });
+//   }
+// });
 
 // if requred
 // ✅ Compare hashed password
