@@ -1,6 +1,9 @@
 const express = require("express");
 const Customer = require("../models/Customer");
 const LoginHistory = require("../models/loginHistory");
+const multer = require("multer");
+const path = require("path");
+const CustomerRequirement = require("../models/CustomerRequirement");
 
 const router = express.Router();
 
@@ -189,6 +192,139 @@ router.get("/all", async (req, res) => {
 router.get("/debug/session", (req, res) => {
   console.log("🛠 Debug Session Data:", req.session);
   res.json(req.session);
+});
+
+// Customer Requirement Submission Route
+// router.post("/customer-requirements", async (req, res) => {
+//   try {
+//     const {
+//       cname,
+//       pname,
+//       part_name,
+//       category,
+//       email,
+//       phone_number,
+//       cpno,
+//       tv,
+//       desc,
+//       special_instructions,
+//       part_revision,
+//       annual_volume,
+//       quote_submission,
+//       start_of_production,
+//       working_status,
+//     } = req.body;
+
+//     // Check if a similar requirement already exists
+//     const existingRequirement = await CustomerRequirement.findOne({
+//       cname,
+//       pname,
+//       part_name,
+//     });
+//     if (existingRequirement) {
+//       return res.status(400).json({ msg: "Requirement already exists" });
+//     }
+
+//     // Generate a unique 6-digit ID for requirement
+//     let uniqueId;
+//     let idExists;
+//     do {
+//       uniqueId = Math.floor(100000 + Math.random() * 900000).toString();
+//       idExists = await CustomerRequirement.findOne({
+//         requirement_id: uniqueId,
+//       });
+//     } while (idExists);
+
+//     const newRequirement = new CustomerRequirement({
+//       requirement_id: uniqueId,
+//       cname,
+//       pname,
+//       part_name,
+//       category,
+//       email,
+//       phone_number,
+//       cpno,
+//       tv,
+//       desc,
+//       special_instructions,
+//       part_revision,
+//       annual_volume,
+//       quote_submission,
+//       start_of_production,
+//       working_status,
+//     });
+
+//     await newRequirement.save();
+//     res.status(201).json({
+//       msg: "Requirement submitted successfully!",
+//       requirement_id: uniqueId,
+//     });
+//   } catch (error) {
+//     console.error("Requirement Submission Error:", error);
+//     res.status(500).json({ msg: "Server error" });
+//   }
+// });
+
+router.post("/customer-requirements", async (req, res) => {
+  try {
+    console.log("Received Data:", req.body); // Log incoming data
+
+    const {
+      cname,
+      pname,
+      part_name,
+      category,
+      email,
+      phone_number,
+      cpno,
+      tv,
+      desc,
+      special_instructions,
+      part_revision,
+      annual_volume,
+      quote_submission,
+      start_of_production,
+      working_status,
+    } = req.body;
+
+    if (
+      !cname ||
+      !pname ||
+      !part_name ||
+      !quote_submission ||
+      !start_of_production ||
+      !annual_volume ||
+      !part_revision
+    ) {
+      return res
+        .status(400)
+        .json({ msg: "Missing required fields", receivedData: req.body });
+    }
+
+    const newRequirement = new CustomerRequirement({
+      cname,
+      pname,
+      part_name,
+      category,
+      email,
+      phone_number,
+      cpno,
+      tv,
+      desc,
+      special_instructions,
+      part_revision,
+      annual_volume,
+      quote_submission,
+      start_of_production,
+      working_status,
+    });
+
+    await newRequirement.save();
+    res.status(201).json({ msg: "Requirement submitted successfully!" });
+  } catch (error) {
+    console.error("Requirement Submission Error:", error);
+    res.status(500).json({ msg: "Server error", error: error.message });
+  }
 });
 
 module.exports = router;
