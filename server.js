@@ -7,12 +7,21 @@ const MongoStore = require("connect-mongo");
 require("dotenv").config();
 
 const app = express();
-connectDB();
 
+// Connect to MongoDB
+connectDB().catch((err) => console.error("MongoDB Connection Error:", err));
+
+// ✅ Updated CORS Configuration
 app.use(
   cors({
-    origin: ["http://127.0.0.1:5500", "http://localhost:5500"], // Allow both
-    credentials: true,
+    origin: [
+      "http://127.0.0.1:5500",
+      "http://localhost:5500",
+      "https://customerergoasia.netlify.app", // ✅ Added Netlify frontend
+    ],
+    credentials: true, // ✅ Allow credentials (cookies, sessions)
+    methods: ["GET", "POST", "PUT", "DELETE"], // ✅ Allowed methods
+    allowedHeaders: ["Content-Type", "Authorization"], // ✅ Allowed headers
   })
 );
 
@@ -20,37 +29,35 @@ app.use(express.json());
 app.use("/uploads", express.static("uploads")); // Serve uploaded files
 app.use(express.urlencoded({ extended: true }));
 
+// ✅ Secure Session Configuration
 app.use(
   session({
-    secret:
-      process.env.SESSION_SECRET ||
-      "3422db72da5022f2a2854369b3a3d48ebbb81234a99620174ffb78e97a123d9c", // ✅ Secure secret
+    secret: process.env.SESSION_SECRET || "your_default_secret",
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-      mongoUrl: process.env.CUSTOMER_DB_URI, // ✅ MongoDB connection
-      collectionName: "sessions", // ✅ Explicitly set collection name
+      mongoUrl: process.env.CUSTOMER_DB_URI,
+      collectionName: "sessions",
     }),
     cookie: {
-      secure: false, // ❌ Change to true for HTTPS
-      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // ✅ Secure cookies in production
+      httpOnly: true, // ✅ Prevent XSS attacks
       sameSite: "lax",
       maxAge: 1000 * 60 * 60 * 24, // 1-day session lifespan
     },
   })
 );
 
-// ✅ Debug: Log session on every request
+// ✅ Debug Middleware: Logs Session Data
 app.use((req, res, next) => {
   console.log("Session Middleware Debug:", req.session);
   next();
 });
 
-// 3422db72da5022f2a2854369b3a3d48ebbb81234a99620174ffb78e97a123d9c
-
+// ✅ Routes
 app.use("/api/customer", require("./routes/customerRoutes"));
-
 app.use("/api/supplier", require("./routes/supplierRoutes"));
 
-const PORT = process.env.PORT || 5000; // ✅ Dynamic port selection
+// ✅ Dynamic PORT Handling
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
