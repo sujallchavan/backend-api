@@ -5,6 +5,7 @@ const CustomerRequirementSchema = new mongoose.Schema({
     type: Number,
     unique: true,
   },
+  customer_id: { type: Number, required: true },
   cname: { type: String, required: true },
   pname: { type: String, required: true },
   Part_Name: { type: String, required: true },

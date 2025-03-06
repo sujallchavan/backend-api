@@ -11,13 +11,14 @@ connectDB();
 
 app.use(
   cors({
-    origin: "http://127.0.0.1:5500", // ✅ Allow frontend URL
-    credentials: true, // ✅ Allow cookies & sessions
+    origin: ["http://127.0.0.1:5500", "http://localhost:5500"], // Allow both
+    credentials: true,
   })
 );
 
 app.use(express.json());
 app.use("/uploads", express.static("uploads")); // Serve uploaded files
+app.use(express.urlencoded({ extended: true }));
 
 app.use(
   session({

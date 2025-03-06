@@ -189,10 +189,10 @@ router.get("/all", async (req, res) => {
 // });
 
 // Check session data after login
-router.get("/debug/session", (req, res) => {
-  console.log("🛠 Debug Session Data:", req.session);
-  res.json(req.session);
-});
+// router.get("/debug/session", (req, res) => {
+//   console.log("🛠 Debug Session Data:", req.session);
+//   res.json(req.session);
+// });
 
 // Customer Requirement Submission Route
 // router.post("/customer-requirements", async (req, res) => {
@@ -265,65 +265,130 @@ router.get("/debug/session", (req, res) => {
 //   }
 // });
 
-router.post("/customer-requirements", async (req, res) => {
+// Configure Multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // Store files in 'uploads/' directory
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+const upload = multer({ storage: storage });
+
+const generateOrderId = async () => {
+  let orderId;
+  let isUnique = false;
+
+  while (!isUnique) {
+    orderId = String(Math.floor(100 + Math.random() * 900)); // Generate random 3-digit number (100-999)
+
+    // Check if this Order ID already exists
+    const existingOrder = await CustomerRequirement.findOne({
+      order_id: orderId,
+    });
+    if (!existingOrder) {
+      isUnique = true;
+    }
+  }
+  return orderId;
+};
+
+router.post(
+  "/submit-requirement",
+  upload.single("pdf_file"),
+  async (req, res) => {
+    try {
+      const {
+        cname,
+        customer_id,
+        pname,
+        Part_Name,
+        category,
+        email,
+        phone_number,
+        cpno,
+        tv,
+        desc,
+        blank_name,
+        pr,
+        av,
+        qs,
+        sop,
+        working_status,
+      } = req.body;
+
+      // ✅ Convert customer_id to a Number (if it's sent as a string)
+      // customer_id = Number(customer_id);
+      // if (isNaN(customer_id)) {
+      //   return res
+      //     .status(400)
+      //     .json({ error: "Invalid customer_id. Must be a number." });
+      // }
+      const pdf_file = req.file ? req.file.path : "";
+
+      // Generate a 3-digit order ID
+      const order_id = Math.floor(100 + Math.random() * 900);
+
+      const newRequirement = new CustomerRequirement({
+        order_id, // ✅ Store generated order ID
+        customer_id,
+        cname,
+        pname,
+        Part_Name,
+        category,
+        email,
+        phone_number,
+        cpno,
+        tv,
+        desc,
+        blank_name,
+        pr,
+        av,
+        qs,
+        sop,
+        working_status,
+        pdf_file,
+      });
+
+      await newRequirement.save();
+
+      // ✅ Return JSON response correctly
+      res
+        .status(201)
+        .json({ message: "Customer requirement saved successfully", order_id });
+    } catch (error) {
+      console.error("Error saving requirement:", error);
+      res.status(500).json({ error: "Failed to save requirement" });
+    }
+  }
+);
+
+router.get("/orders/:customer_id", async (req, res) => {
   try {
-    console.log("Received Data:", req.body); // Log incoming data
+    const { customer_id } = req.params;
 
-    const {
-      cname,
-      pname,
-      part_name,
-      category,
-      email,
-      phone_number,
-      cpno,
-      tv,
-      desc,
-      special_instructions,
-      part_revision,
-      annual_volume,
-      quote_submission,
-      start_of_production,
-      working_status,
-    } = req.body;
-
-    if (
-      !cname ||
-      !pname ||
-      !part_name ||
-      !quote_submission ||
-      !start_of_production ||
-      !annual_volume ||
-      !part_revision
-    ) {
-      return res
-        .status(400)
-        .json({ msg: "Missing required fields", receivedData: req.body });
+    // Ensure customer_id is a number
+    const numericCustomerId = Number(customer_id);
+    if (isNaN(numericCustomerId)) {
+      return res.status(400).json({ error: "Invalid customer ID" });
     }
 
-    const newRequirement = new CustomerRequirement({
-      cname,
-      pname,
-      part_name,
-      category,
-      email,
-      phone_number,
-      cpno,
-      tv,
-      desc,
-      special_instructions,
-      part_revision,
-      annual_volume,
-      quote_submission,
-      start_of_production,
-      working_status,
+    const orders = await CustomerRequirement.find({
+      customer_id: numericCustomerId,
     });
 
-    await newRequirement.save();
-    res.status(201).json({ msg: "Requirement submitted successfully!" });
+    if (orders.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No orders found for this customer." });
+    }
+
+    res.status(200).json(orders);
   } catch (error) {
-    console.error("Requirement Submission Error:", error);
-    res.status(500).json({ msg: "Server error", error: error.message });
+    console.error("Error fetching orders:", error);
+    res.status(500).json({ error: "Failed to fetch orders." });
   }
 });
 
