@@ -392,4 +392,31 @@ router.get("/orders/:customer_id", async (req, res) => {
   }
 });
 
+router.get("/total-orders", async (req, res) => {
+  try {
+    if (!req.session || !req.session.customer_id) {
+      return res.status(401).json({ msg: "Unauthorized. Please log in." });
+    }
+
+    const customerId = req.session.customer_id;
+    console.log("Customer ID:", customerId); // Debugging
+
+    // Fetch only total and pending orders
+    const totalOrders = await CustomerRequirement.countDocuments({
+      customer_id: customerId,
+    });
+    const pendingOrders = await CustomerRequirement.countDocuments({
+      customer_id: customerId,
+      working_status: "Pending",
+    });
+
+    console.log("Total:", totalOrders, "Pending:", pendingOrders); // Debugging
+
+    res.status(200).json({ totalOrders, pendingOrders });
+  } catch (error) {
+    console.error("Error fetching order stats:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
 module.exports = router;

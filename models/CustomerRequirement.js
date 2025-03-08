@@ -24,19 +24,23 @@ const CustomerRequirementSchema = new mongoose.Schema({
   av: { type: Number, required: true },
   qs: { type: Date, required: true },
   sop: { type: Date, required: true },
-  working_status: { type: String, enum: ["pending"], default: "pending" },
+  working_status: {
+    type: String,
+    enum: ["Pending", "Completed", "Working"],
+    default: "Pending",
+  },
   pdf_file: { type: String }, // Stores file path
+  createdAt: { type: Date, default: () => new Date() }, // ✅ Ensure current timestamp is stored
 });
 
-// Generate a random 4-digit unique order ID before saving
+// ✅ Ensure unique 4-digit order_id before saving
 CustomerRequirementSchema.pre("save", async function (next) {
   if (!this.order_id) {
     let randomId;
     let exists = true;
 
-    // Ensure unique 4-digit order_id
     do {
-      randomId = Math.floor(1000 + Math.random() * 9000); // Generates a number between 1000-9999
+      randomId = Math.floor(1000 + Math.random() * 9000); // Generate a 4-digit ID
       exists = await mongoose
         .model("CustomerRequirement")
         .exists({ order_id: randomId });
@@ -44,6 +48,11 @@ CustomerRequirementSchema.pre("save", async function (next) {
 
     this.order_id = randomId;
   }
+
+  if (!this.createdAt) {
+    this.createdAt = new Date(); // ✅ Ensure createdAt gets set at the time of order creation
+  }
+
   next();
 });
 
