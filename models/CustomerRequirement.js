@@ -31,6 +31,12 @@ const CustomerRequirementSchema = new mongoose.Schema({
   },
   pdf_file: { type: String }, // Stores file path
   createdAt: { type: Date, default: () => new Date() }, // ✅ Ensure current timestamp is stored
+  // ✅ NEW FIELD for Approval Status
+  isApproved: {
+    type: String,
+    enum: ["Approved", "Disapproved"],
+    default: "Disapproved",
+  },
 });
 
 // ✅ Ensure unique 4-digit order_id before saving

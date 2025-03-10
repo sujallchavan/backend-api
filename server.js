@@ -58,6 +58,7 @@ app.use((req, res, next) => {
 // ✅ Routes
 app.use("/api/customer", require("./routes/customerRoutes"));
 app.use("/api/supplier", require("./routes/supplierRoutes"));
+app.use("/api/manufacturer", require("./routes/ergoasiaRoutes"));
 
 // ✅ Dynamic PORT Handling
 const PORT = process.env.PORT || 5000;
