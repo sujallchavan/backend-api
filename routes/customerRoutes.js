@@ -3,6 +3,9 @@ const Customer = require("../models/Customer");
 const LoginHistory = require("../models/loginHistory");
 const multer = require("multer");
 const path = require("path");
+
+const Manufacturer = require("../models/Manufacturer"); // Adjust path if needed
+
 const CustomerRequirement = require("../models/CustomerRequirement");
 
 const router = express.Router();
