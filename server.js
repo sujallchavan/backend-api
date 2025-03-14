@@ -1,4 +1,5 @@
 const express = require("express");
+const supplierRoutes = require("./routes/supplierRoutes");
 const connectDB = require("./config/db");
 const cors = require("cors");
 const session = require("express-session");
@@ -58,7 +59,7 @@ app.use((req, res, next) => {
 
 // ✅ Routes
 app.use("/api/customer", require("./routes/customerRoutes"));
-app.use("/api/supplier", require("./routes/supplierRoutes"));
+app.use("/api/supplier", supplierRoutes);
 app.use("/api/manufacturer", require("./routes/ergoasiaRoutes"));
 
 // ✅ Dynamic PORT Handling
