@@ -134,4 +134,17 @@ router.get("/user/:email", async (req, res) => {
   }
 });
 
+// ✅ Route to fetch only approved customer requirements
+router.get("/approved-requirements", async (req, res) => {
+  try {
+    const approvedRequirements = await CustomerRequirement.find({
+      isApproved: "Approved",
+    });
+    res.status(200).json(approvedRequirements);
+  } catch (error) {
+    console.error("Error fetching approved projects:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 module.exports = router;
