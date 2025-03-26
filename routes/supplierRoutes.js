@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const Supplier = require("../models/Supplier");
+const CustomerRequirement = require("../models/CustomerRequirement");
 
 const router = express.Router();
 
@@ -62,6 +63,28 @@ router.post("/login", async (req, res) => {
 
     res.json({ message: "Login successful", supplier });
   } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ✅ Fetch Customer Orders Based on Supplier's Category
+router.get("/orders", async (req, res) => {
+  try {
+    const { category } = req.query;
+
+    if (!category) {
+      return res.status(400).json({ message: "Category is required" });
+    }
+
+    const orders = await CustomerRequirement.find({ category });
+
+    if (orders.length === 0) {
+      return res.json([]);
+    }
+
+    res.json(orders);
+  } catch (error) {
+    console.error("Error fetching orders:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
