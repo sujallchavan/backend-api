@@ -4,29 +4,35 @@ const Supplier = require("../models/Supplier");
 
 const router = express.Router();
 
-// Supplier Signup Route
+// Signup Route
 router.post("/signup", async (req, res) => {
-  const { name, email, password, category } = req.body;
-
   try {
+    const { name, email, password, category, phoneNumber, location } = req.body;
+
+    // Check if email already exists
     const existingSupplier = await Supplier.findOne({ email });
     if (existingSupplier) {
       return res.status(400).json({ message: "Email already exists" });
     }
 
+    // Hash password before saving
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create new supplier
     const newSupplier = new Supplier({
       name,
       email,
       password: hashedPassword,
       category,
+      phoneNumber,
+      location,
     });
 
     await newSupplier.save();
-    res.status(201).json({ message: "Supplier registered successfully!" });
+    res.status(201).json({ message: "Signup successful!" });
   } catch (error) {
-    res.status(500).json({ message: "Error registering supplier", error });
+    console.error("Signup Error:", error);
+    res.status(500).json({ message: "Server error, please try again." });
   }
 });
 
