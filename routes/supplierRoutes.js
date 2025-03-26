@@ -1,47 +1,54 @@
 const express = require("express");
+const bcrypt = require("bcryptjs");
+const Supplier = require("../models/Supplier");
+
 const router = express.Router();
-const Supplier = require("../models/Supplier"); // Import your Supplier model
 
-// Signup Route
+// Supplier Signup Route
 router.post("/signup", async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
+  const { name, email, password, category } = req.body;
 
+  try {
     const existingSupplier = await Supplier.findOne({ email });
     if (existingSupplier) {
-      return res.status(400).json({ error: "Email already exists" });
+      return res.status(400).json({ message: "Email already exists" });
     }
 
-    const newSupplier = new Supplier({ name, email, password });
-    await newSupplier.save();
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    res
-      .status(201)
-      .json({ message: "Signup successful", user: { name, email } });
+    const newSupplier = new Supplier({
+      name,
+      email,
+      password: hashedPassword,
+      category,
+    });
+
+    await newSupplier.save();
+    res.status(201).json({ message: "Supplier registered successfully!" });
   } catch (error) {
-    console.error("Signup Error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ message: "Error registering supplier", error });
   }
 });
 
 // Login Route
 router.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
+  try {
     const supplier = await Supplier.findOne({ email });
-    if (!supplier || supplier.password !== password) {
-      return res.status(401).json({ error: "Invalid credentials" });
+    if (!supplier) {
+      return res.status(400).json({ message: "Supplier not found" });
     }
 
-    res.status(200).json({
-      message: "Login successful",
-      user: { name: supplier.name, email: supplier.email },
-    });
+    const isMatch = await bcrypt.compare(password, supplier.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    res.json({ message: "Login successful", supplier });
   } catch (error) {
-    console.error("Login Error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-module.exports = router; // ✅ Export ONLY the router
+module.exports = router;

@@ -130,7 +130,7 @@ router.get("/user/:email", async (req, res) => {
     res.json({ email: user.email, name: user.name });
   } catch (error) {
     console.error("Error fetching user:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Internal server errorv" });
   }
 });
 
