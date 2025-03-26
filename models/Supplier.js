@@ -9,6 +9,7 @@ const SupplierSchema = new mongoose.Schema({
   password: { type: String, required: true },
   category: { type: String, required: true },
   phoneNumber: { type: String, required: true },
+  companyName: { type: String, required: true },
   location: { type: String, required: true },
   supplierId: { type: Number, default: generateSupplierId, unique: true },
   createdAt: { type: Date, default: Date.now },

@@ -7,7 +7,15 @@ const router = express.Router();
 // Signup Route
 router.post("/signup", async (req, res) => {
   try {
-    const { name, email, password, category, phoneNumber, location } = req.body;
+    const {
+      name,
+      email,
+      password,
+      category,
+      phoneNumber,
+      companyName,
+      location,
+    } = req.body;
 
     // Check if email already exists
     const existingSupplier = await Supplier.findOne({ email });
@@ -25,6 +33,7 @@ router.post("/signup", async (req, res) => {
       password: hashedPassword,
       category,
       phoneNumber,
+      companyName,
       location,
     });
 
