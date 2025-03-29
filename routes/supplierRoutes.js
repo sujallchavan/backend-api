@@ -1,11 +1,12 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
+const mongoose = require("mongoose");
 const Supplier = require("../models/Supplier");
 const CustomerRequirement = require("../models/CustomerRequirement");
 
 const router = express.Router();
 
-// Signup Route
+// ✅ Supplier Signup
 router.post("/signup", async (req, res) => {
   try {
     const {
@@ -18,16 +19,12 @@ router.post("/signup", async (req, res) => {
       location,
     } = req.body;
 
-    // Check if email already exists
     const existingSupplier = await Supplier.findOne({ email });
     if (existingSupplier) {
       return res.status(400).json({ message: "Email already exists" });
     }
 
-    // Hash password before saving
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create new supplier
     const newSupplier = new Supplier({
       name,
       email,
@@ -46,7 +43,7 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// Login Route
+// ✅ Supplier Login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -67,7 +64,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ✅ Fetch Customer Orders Based on Supplier's Category
+// ✅ Fetch Orders Based on Supplier's Category
 router.get("/orders", async (req, res) => {
   try {
     const { category } = req.query;
@@ -76,16 +73,63 @@ router.get("/orders", async (req, res) => {
       return res.status(400).json({ message: "Category is required" });
     }
 
-    const orders = await CustomerRequirement.find({ category });
-
-    if (orders.length === 0) {
-      return res.json([]);
-    }
+    const orders = await CustomerRequirement.find({ category }).populate(
+      "supplierResponses.supplier_Id",
+      "name email"
+    );
 
     res.json(orders);
   } catch (error) {
     console.error("Error fetching orders:", error);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.put("/orders/respond", async (req, res) => {
+  try {
+    const { order_id, supplierId, status } = req.body;
+
+    // ✅ Validate required fields
+    if (!order_id || !supplierId || !status) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // ✅ Convert to correct data types
+    const orderIdNum = parseInt(order_id);
+    const supplierIdNum = parseInt(supplierId);
+
+    if (isNaN(orderIdNum) || isNaN(supplierIdNum)) {
+      return res.status(400).json({ error: "Invalid data format" });
+    }
+
+    // ✅ Find order by order_id
+    const order = await CustomerRequirement.findOne({ order_id: orderIdNum });
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // ✅ Check if supplier already responded
+    const existingResponse = order.supplierResponses.find(
+      (resp) => resp.supplier_Id === supplierIdNum
+    );
+
+    if (existingResponse) {
+      existingResponse.status = status;
+    } else {
+      order.supplierResponses.push({
+        supplier_Id: supplierIdNum,
+        status: status,
+      });
+    }
+
+    // ✅ Save changes
+    await order.save();
+
+    res.json({ message: "Order updated successfully", order });
+  } catch (error) {
+    console.error("❌ Error updating order:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

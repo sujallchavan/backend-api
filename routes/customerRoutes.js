@@ -303,6 +303,8 @@ router.post(
   upload.single("pdf_file"),
   async (req, res) => {
     try {
+      console.log("Received Data:", req.body); // Debugging line
+
       const {
         cname,
         customer_id,
@@ -322,20 +324,15 @@ router.post(
         working_status,
       } = req.body;
 
-      // ✅ Convert customer_id to a Number (if it's sent as a string)
-      // customer_id = Number(customer_id);
-      // if (isNaN(customer_id)) {
-      //   return res
-      //     .status(400)
-      //     .json({ error: "Invalid customer_id. Must be a number." });
-      // }
-      const pdf_file = req.file ? req.file.path : "";
+      if (!phone_number) {
+        return res.status(400).json({ error: "Phone number is required" });
+      }
 
-      // Generate a 3-digit order ID
+      const pdf_file = req.file ? req.file.path : "";
       const order_id = Math.floor(100 + Math.random() * 900);
 
       const newRequirement = new CustomerRequirement({
-        order_id, // ✅ Store generated order ID
+        order_id,
         customer_id,
         cname,
         pname,
@@ -357,7 +354,6 @@ router.post(
 
       await newRequirement.save();
 
-      // ✅ Return JSON response correctly
       res
         .status(201)
         .json({ message: "Customer requirement saved successfully", order_id });
