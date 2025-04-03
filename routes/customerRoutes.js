@@ -418,4 +418,37 @@ router.get("/total-orders", async (req, res) => {
   }
 });
 
+// Get orders with supplier responses for a specific customer
+router.get("/orders/:customer_id", async (req, res) => {
+  try {
+    const { customer_id } = req.params;
+
+    // Find all orders for this customer with supplier responses
+    const orders = await CustomerRequirement.find({
+      customer_id: Number(customer_id),
+    }).populate({
+      path: "supplierResponses.supplier_Id",
+      select: "name email", // Include supplier details if needed
+    });
+
+    // Transform data to include supplier acceptance count
+    const enhancedOrders = orders.map((order) => {
+      const acceptedSuppliers = order.supplierResponses.filter(
+        (response) => response.status === "Accepted"
+      ).length;
+
+      return {
+        ...order._doc,
+        acceptedSuppliers,
+        totalResponses: order.supplierResponses.length,
+      };
+    });
+
+    res.status(200).json(enhancedOrders);
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({ error: "Failed to fetch orders" });
+  }
+});
+
 module.exports = router;

@@ -39,13 +39,14 @@ const CustomerRequirementSchema = new mongoose.Schema({
   // ✅ Supplier responses stored properly
   supplierResponses: [
     {
-      supplier_Id: { type: Number, required: true }, // ✅ Ensure this is a Number
+      supplier_Id: { type: Number, required: true },
       status: {
         type: String,
         enum: ["Pending", "Accepted", "Rejected"],
         default: "Pending",
         required: true,
       },
+      date: { type: Date, default: Date.now }, // ✅ Stores date when status is updated
     },
   ],
 });
