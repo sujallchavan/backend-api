@@ -451,4 +451,36 @@ router.get("/orders/:customer_id", async (req, res) => {
   }
 });
 
+// Add this route to your existing routes
+// Add this route to your existing routes (replace the existing one)
+// Add this route to handle approved orders
+// Add this route to handle approved orders
+router.get("/approved-orders/:customer_id", async (req, res) => {
+  try {
+    const { customer_id } = req.params;
+    const numericCustomerId = Number(customer_id);
+
+    // Find orders for this customer that are approved
+    const approvedOrders = await CustomerRequirement.find({
+      customer_id: numericCustomerId,
+      isApproved: "Approved", // Changed from "Disapproved" to "Approved"
+    }).sort({ createdAt: -1 });
+
+    if (!approvedOrders || approvedOrders.length === 0) {
+      return res.status(404).json({
+        message: "No approved orders found for this customer",
+        customer_id: numericCustomerId,
+      });
+    }
+
+    res.status(200).json(approvedOrders);
+  } catch (error) {
+    console.error("Error fetching approved orders:", error);
+    res.status(500).json({
+      message: "Failed to fetch approved orders",
+      error: error.message,
+    });
+  }
+});
+
 module.exports = router;

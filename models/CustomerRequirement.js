@@ -29,14 +29,13 @@ const CustomerRequirementSchema = new mongoose.Schema({
     enum: ["Pending", "Completed", "Working"],
     default: "Pending",
   },
-  pdf_file: { type: String }, // Stores file path
+  pdf_file: { type: String },
   createdAt: { type: Date, default: () => new Date() },
   isApproved: {
     type: String,
     enum: ["Approved", "Disapproved"],
     default: "Disapproved",
   },
-  // ✅ Supplier responses stored properly
   supplierResponses: [
     {
       supplier_Id: { type: Number, required: true },
@@ -46,12 +45,11 @@ const CustomerRequirementSchema = new mongoose.Schema({
         default: "Pending",
         required: true,
       },
-      date: { type: Date, default: Date.now }, // ✅ Stores date when status is updated
+      date: { type: Date, default: null }, // ✅ Store the timestamp
     },
   ],
 });
 
-// ✅ Ensure unique 4-digit order_id before saving
 CustomerRequirementSchema.pre("save", async function (next) {
   if (!this.order_id) {
     let randomId;

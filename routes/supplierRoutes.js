@@ -89,7 +89,6 @@ router.put("/orders/respond", async (req, res) => {
   try {
     const { order_id, supplierId, status } = req.body;
 
-    // ✅ Validate required fields
     if (!order_id || !supplierId || !status) {
       return res.status(400).json({ error: "Missing required fields" });
     }
@@ -109,17 +108,21 @@ router.put("/orders/respond", async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    // ✅ Check if supplier already responded
+    // ✅ Check if the supplier already responded
     const existingResponse = order.supplierResponses.find(
       (resp) => resp.supplier_Id === supplierIdNum
     );
 
     if (existingResponse) {
-      existingResponse.status = status;
+      existingResponse.status = status; // Update status
+      if (!existingResponse.date) {
+        existingResponse.date = new Date(); // ✅ Only set date if not set before
+      }
     } else {
       order.supplierResponses.push({
         supplier_Id: supplierIdNum,
         status: status,
+        date: new Date(), // ✅ Add timestamp on first response
       });
     }
 
