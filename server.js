@@ -20,7 +20,8 @@ app.use(
       "http://localhost:5500",
       "http://127.0.0.1:5512",
       "https://customerergoasia.netlify.app",
-      "https://manufacturerfrontend.netlify.app", // ✅ Added Netlify frontend
+      "https://manufacturerfrontend.netlify.app",
+      "https://supplyerergoasia.netlify.app/", // ✅ Added Netlify frontend
     ],
     credentials: true, // ✅ Allow credentials (cookies, sessions)
     methods: ["GET", "POST", "PUT", "DELETE"], // ✅ Allowed methods
