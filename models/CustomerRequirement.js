@@ -36,6 +36,14 @@ const CustomerRequirementSchema = new mongoose.Schema({
     enum: ["Approved", "Disapproved"],
     default: "Disapproved",
   },
+  isSupplierAccepted: {
+    type: Boolean,
+    default: false,
+  },
+  acceptedSupplier: {
+    supplier_Id: { type: Number },
+    acceptedAt: { type: Date },
+  },
   supplierResponses: [
     {
       supplier_Id: { type: Number, required: true },
@@ -45,7 +53,7 @@ const CustomerRequirementSchema = new mongoose.Schema({
         default: "Pending",
         required: true,
       },
-      date: { type: Date, default: null }, // ✅ Store the timestamp
+      date: { type: Date, default: null },
     },
   ],
 });

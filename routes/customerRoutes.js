@@ -10,6 +10,79 @@ const CustomerRequirement = require("../models/CustomerRequirement");
 
 const router = express.Router();
 
+// Add this before any other middleware
+router.post("/accept-supplier-response", async (req, res) => {
+  try {
+    console.log("Accept supplier endpoint hit"); // Debug log
+
+    const { order_id, customer_id, supplier_Id } = req.body;
+
+    // Validate input
+    if (!order_id || !customer_id || !supplier_Id) {
+      console.log("Missing fields", req.body); // Debug log
+      return res.status(400).json({
+        success: false,
+        error: "Missing required fields",
+      });
+    }
+
+    const order = await CustomerRequirement.findOne({
+      order_id: Number(order_id),
+      customer_id: Number(customer_id),
+    });
+
+    if (!order) {
+      console.log("Order not found", { order_id, customer_id }); // Debug log
+      return res.status(404).json({
+        success: false,
+        error: "Order not found",
+      });
+    }
+
+    const supplierResponse = order.supplierResponses.find(
+      (r) => r.supplier_Id === Number(supplier_Id) && r.status === "Accepted"
+    );
+
+    if (!supplierResponse) {
+      console.log("Supplier not accepted", { supplier_Id }); // Debug log
+      return res.status(400).json({
+        success: false,
+        error: "Supplier hasn't accepted this order",
+      });
+    }
+
+    if (order.isSupplierAccepted) {
+      console.log("Supplier already accepted"); // Debug log
+      return res.status(400).json({
+        success: false,
+        error: "Supplier already accepted for this order",
+      });
+    }
+
+    order.acceptedSupplier = {
+      supplier_Id: Number(supplier_Id),
+      acceptedAt: new Date(),
+    };
+    order.isSupplierAccepted = true;
+    order.working_status = "Working";
+
+    await order.save();
+
+    console.log("Supplier accepted successfully"); // Debug log
+    return res.status(200).json({
+      success: true,
+      message: "Supplier successfully accepted",
+      order,
+    });
+  } catch (error) {
+    console.error("SERVER ERROR:", error); // Debug log
+    return res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
+  }
+});
+
 // Signup Route
 router.post("/signup", async (req, res) => {
   try {
