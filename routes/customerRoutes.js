@@ -173,47 +173,6 @@ router.get("/history/:email", async (req, res) => {
   }
 });
 
-// router.get("/login-history/:email", async (req, res) => {
-//   try {
-//     const history = await LoginHistory.find({ email: req.params.email });
-//     res.status(200).json(history);
-//   } catch (error) {
-//     console.error("❌ Fetch Error:", error);
-//     res.status(500).json({ msg: "Server error" });
-//   }
-// });
-
-// if requred
-// ✅ Compare hashed password
-// const isMatch = await bcrypt.compare(password, customer.password);
-// if (!isMatch) {
-//   return res.status(401).json({ msg: "Incorrect password" });
-// }
-
-// Profile Route (Fetch customer details if logged in)
-// router.get("/profile", async (req, res) => {
-//   console.log("from route Session Data:", req.session); // Debugging
-
-//   if (!req.session.email) {
-//     return res.status(401).json({ msg: "Unauthorized. Please log in." });
-//   }
-
-//   try {
-//     const customer = await Customer.findOne({
-//       email: req.session.email,
-//     }).select("-password");
-
-//     if (!customer) {
-//       return res.status(404).json({ msg: "Customer not found" });
-//     }
-
-//     res.status(200).json({ customer });
-//   } catch (error) {
-//     console.error("Profile Fetch Error:", error);
-//     res.status(500).json({ msg: "Server error" });
-//   }
-// });
-
 // Logout Route (Destroy session)
 router.post("/logout", (req, res) => {
   req.session.destroy((err) => {
@@ -234,112 +193,6 @@ router.get("/all", async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 });
-
-// router.get("/profile/table", async (req, res) => {
-//   console.log("🔍 Session Data in /profile:", req.session);
-
-//   if (!req.session.email) {
-//     return res.status(401).json({ msg: "Unauthorized. Please log in." });
-//   }
-
-//   try {
-//     const customer = await Customer.findOne({
-//       email: req.session.email,
-//     }).select("-password");
-
-//     if (!customer) {
-//       return res.status(404).json({ msg: "Customer not found" });
-//     }
-
-//     if (!customer.isLoggedIn) {
-//       return res
-//         .status(401)
-//         .json({ msg: "Session expired. Please log in again." });
-//     }
-
-//     res.status(200).json({ customer });
-//   } catch (error) {
-//     console.error("❌ Profile Fetch Error:", error);
-//     res.status(500).json({ msg: "Server error" });
-//   }
-// });
-
-// Check session data after login
-// router.get("/debug/session", (req, res) => {
-//   console.log("🛠 Debug Session Data:", req.session);
-//   res.json(req.session);
-// });
-
-// Customer Requirement Submission Route
-// router.post("/customer-requirements", async (req, res) => {
-//   try {
-//     const {
-//       cname,
-//       pname,
-//       part_name,
-//       category,
-//       email,
-//       phone_number,
-//       cpno,
-//       tv,
-//       desc,
-//       special_instructions,
-//       part_revision,
-//       annual_volume,
-//       quote_submission,
-//       start_of_production,
-//       working_status,
-//     } = req.body;
-
-//     // Check if a similar requirement already exists
-//     const existingRequirement = await CustomerRequirement.findOne({
-//       cname,
-//       pname,
-//       part_name,
-//     });
-//     if (existingRequirement) {
-//       return res.status(400).json({ msg: "Requirement already exists" });
-//     }
-
-//     // Generate a unique 6-digit ID for requirement
-//     let uniqueId;
-//     let idExists;
-//     do {
-//       uniqueId = Math.floor(100000 + Math.random() * 900000).toString();
-//       idExists = await CustomerRequirement.findOne({
-//         requirement_id: uniqueId,
-//       });
-//     } while (idExists);
-
-//     const newRequirement = new CustomerRequirement({
-//       requirement_id: uniqueId,
-//       cname,
-//       pname,
-//       part_name,
-//       category,
-//       email,
-//       phone_number,
-//       cpno,
-//       tv,
-//       desc,
-//       special_instructions,
-//       part_revision,
-//       annual_volume,
-//       quote_submission,
-//       start_of_production,
-//       working_status,
-//     });
-
-//     await newRequirement.save();
-//     res.status(201).json({
-//       msg: "Requirement submitted successfully!",
-//       requirement_id: uniqueId,
-//     });
-//   } catch (error) {
-//     console.error("Requirement Submission Error:", error);
-//     res.status(500).json({ msg: "Server error" });
-//   }
-// });
 
 // Configure Multer for file uploads
 const storage = multer.diskStorage({
@@ -553,6 +406,65 @@ router.get("/approved-orders/:customer_id", async (req, res) => {
       message: "Failed to fetch approved orders",
       error: error.message,
     });
+  }
+});
+
+// Update order endpoint
+// Add this to your backend routes
+// Update order endpoint
+// Add this route to handle order updates
+router.put("/order/:order_id", async (req, res) => {
+  try {
+    const orderId = req.params.order_id;
+    const updateData = req.body;
+
+    // Make sure to set proper headers
+    res.setHeader("Content-Type", "application/json");
+
+    const updatedOrder = await CustomerRequirement.findOneAndUpdate(
+      { order_id: orderId },
+      updateData,
+      { new: true }
+    );
+
+    if (!updatedOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Order updated successfully",
+      order: updatedOrder,
+    });
+  } catch (error) {
+    console.error("Update error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating order",
+    });
+  }
+});
+
+// Delete order endpoint
+router.delete("/order/:order_id", async (req, res) => {
+  try {
+    const { order_id } = req.params;
+
+    const deletedOrder = await CustomerRequirement.findOneAndDelete({
+      order_id: Number(order_id),
+    });
+
+    if (!deletedOrder) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    res.status(200).json({ message: "Order deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    res.status(500).json({ error: "Failed to delete order" });
   }
 });
 
