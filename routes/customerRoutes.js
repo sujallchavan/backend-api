@@ -468,4 +468,32 @@ router.delete("/order/:order_id", async (req, res) => {
   }
 });
 
+// GET /api/customer/:id/orders
+router.get("/:id/orders", async (req, res) => {
+  try {
+    const customerId = req.params.id;
+    const orders = await Order.find({
+      customerId,
+      acceptedSupplier: { $ne: null },
+    });
+    res.json(orders);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Failed to fetch customer orders with suppliers" });
+  }
+});
+
+// GET /api/supplier/by-number/:supplierId
+router.get("/by-number/:supplierId", async (req, res) => {
+  try {
+    const supplierId = parseInt(req.params.supplierId);
+    const supplier = await Supplier.findOne({ supplierId }); // assuming schema: supplierId: Number
+    if (!supplier) return res.status(404).json({ error: "Supplier not found" });
+    res.json(supplier);
+  } catch (err) {
+    res.status(500).json({ error: "Error fetching supplier" });
+  }
+});
+
 module.exports = router;
