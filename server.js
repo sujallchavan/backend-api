@@ -1,5 +1,6 @@
 const express = require("express");
 const supplierRoutes = require("./routes/supplierRoutes");
+const ergoasiaRoutes = require("./routes/ergoasiaRoutes");
 const connectDB = require("./config/db");
 const cors = require("cors");
 const session = require("express-session");
@@ -24,7 +25,7 @@ app.use(
       "https://supplyerergoasia.netlify.app", // ✅ Added Netlify frontend
     ],
     credentials: true, // ✅ Allow credentials (cookies, sessions)
-    methods: ["GET", "POST", "PUT", "DELETE"], // ✅ Allowed methods
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // ✅ Allowed methods
     allowedHeaders: ["Content-Type", "Authorization"], // ✅ Allowed headers
   })
 );
