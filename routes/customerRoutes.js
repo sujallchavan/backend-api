@@ -1,6 +1,7 @@
 const express = require("express");
 const Customer = require("../models/Customer");
 const LoginHistory = require("../models/loginHistory");
+const Supplier = require("../models/Supplier");
 const multer = require("multer");
 const path = require("path");
 
@@ -493,6 +494,131 @@ router.get("/by-number/:supplierId", async (req, res) => {
     res.json(supplier);
   } catch (err) {
     res.status(500).json({ error: "Error fetching supplier" });
+  }
+});
+
+// Get orders with supplier assignments for a specific customer
+router.get("/orders/:customer_id", async (req, res) => {
+  try {
+    const customer_id = parseInt(req.params.customer_id);
+
+    // Validate customer ID
+    if (isNaN(customer_id)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid customer ID format",
+      });
+    }
+
+    // Find orders with supplier assignments
+    const orders = await CustomerRequirement.find({
+      customer_id: customer_id,
+      acceptedSupplier: { $exists: true, $ne: null },
+    }).sort({ createdAt: -1 });
+
+    // Enhanced response with supplier details
+    const enhancedOrders = await Promise.all(
+      orders.map(async (order) => {
+        let supplierDetails = null;
+
+        // Fetch supplier details if available
+        if (order.acceptedSupplier?.supplier_Id) {
+          try {
+            const supplier = await Supplier.findOne({
+              supplierId: order.acceptedSupplier.supplier_Id,
+            });
+
+            if (supplier) {
+              supplierDetails = {
+                name: supplier.name,
+                email: supplier.email,
+                phone: supplier.phone,
+                location: supplier.location,
+                company: supplier.company,
+                commodities: supplier.commodities,
+              };
+            }
+          } catch (supplierError) {
+            console.error(
+              `Error fetching supplier ${order.acceptedSupplier.supplier_Id}:`,
+              supplierError
+            );
+          }
+        }
+
+        return {
+          order_id: order.order_id,
+          pname: order.pname,
+          Part_Name: order.Part_Name,
+          category: order.category,
+          working_status: order.working_status,
+          isApproved: order.isApproved,
+          acceptedSupplier: {
+            ...order.acceptedSupplier.toObject(),
+            supplierDetails: supplierDetails,
+          },
+          createdAt: order.createdAt,
+          updatedAt: order.updatedAt,
+        };
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      count: enhancedOrders.length,
+      data: enhancedOrders,
+    });
+  } catch (error) {
+    console.error("Error fetching orders with suppliers:", error);
+    res.status(500).json({
+      success: false,
+      error: "Server error while fetching orders",
+    });
+  }
+});
+
+// Get supplier by ID number
+router.get("/supplier/by-number/:supplierId", async (req, res) => {
+  try {
+    const supplierId = parseInt(req.params.supplierId);
+
+    if (isNaN(supplierId)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid supplier ID format",
+      });
+    }
+
+    const supplier = await Supplier.findOne({ supplierId: supplierId }).select(
+      "-password -__v"
+    ); // Exclude sensitive/unnecessary fields
+
+    if (!supplier) {
+      return res.status(404).json({
+        success: false,
+        error: "Supplier not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        supplierId: supplier.supplierId,
+        name: supplier.name,
+        email: supplier.email,
+        phone: supplier.phone,
+        location: supplier.location,
+        company: supplier.company,
+        commodities: supplier.commodities,
+        avatar: supplier.avatar || `/static/img/default-avatar.jpg`,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching supplier:", error);
+    res.status(500).json({
+      success: false,
+      error: "Server error while fetching supplier",
+    });
   }
 });
 
