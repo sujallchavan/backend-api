@@ -622,4 +622,102 @@ router.get("/supplier/by-number/:supplierId", async (req, res) => {
   }
 });
 
+// Add this to your existing routes in customer.js
+
+// Get orders by category for a specific customer
+// Add this to your existing routes in customer.js
+
+// Get orders by category for a specific customer
+// Get orders by category for a specific customer
+router.get("/orders-by-category/:customer_id/:category", async (req, res) => {
+  try {
+    const { customer_id, category } = req.params;
+    const numericCustomerId = Number(customer_id);
+
+    // Validate category
+    const validCategories = ["Hardware", "Electrical", "Mechanical", "all"];
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid category",
+        validCategories: validCategories.filter((c) => c !== "all"),
+      });
+    }
+
+    // Build query
+    const query = {
+      customer_id: numericCustomerId,
+      isApproved: "Approved", // Only show approved orders
+    };
+
+    // Add category filter if not "all"
+    if (category !== "all") {
+      query.category = category;
+    }
+
+    // Find orders matching the category
+    const orders = await CustomerRequirement.find(query).sort({
+      createdAt: -1,
+    });
+
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      data: orders,
+    });
+  } catch (error) {
+    console.error("Error fetching orders by category:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch orders by category",
+    });
+  }
+});
+
+router.get("/order-stats/:customer_id", async (req, res) => {
+  try {
+    const customerId = Number(req.params.customer_id);
+
+    // Get counts from database
+    const total = await CustomerRequirement.countDocuments({
+      customer_id: customerId,
+    });
+    const working = await CustomerRequirement.countDocuments({
+      customer_id: customerId,
+      working_status: "Working",
+      isApproved: "Approved",
+    });
+    const completed = await CustomerRequirement.countDocuments({
+      customer_id: customerId,
+      working_status: "Completed",
+      isApproved: "Approved",
+    });
+    const pending = await CustomerRequirement.countDocuments({
+      customer_id: customerId,
+      working_status: "Pending",
+      isApproved: "Approved",
+    });
+
+    // Calculate changes (you would need to store previous values)
+    const totalChange = 5; // Example - calculate real percentage change
+    const workingChange = 3;
+    const completedChange = 2;
+    const pendingChange = -1;
+
+    res.json({
+      total,
+      working,
+      completed,
+      pending,
+      totalChange,
+      workingChange,
+      completedChange,
+      pendingChange,
+    });
+  } catch (error) {
+    console.error("Error fetching order stats:", error);
+    res.status(500).json({ error: "Failed to fetch order stats" });
+  }
+});
+
 module.exports = router;
