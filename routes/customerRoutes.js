@@ -720,4 +720,33 @@ router.get("/order-stats/:customer_id", async (req, res) => {
   }
 });
 
+// GET /api/supplier/by-number/:supplierId
+// GET /api/supplier/by-number/:supplierId
+// In your backend route file
+router.get("/by-number/:supplierId", async (req, res) => {
+  try {
+    const supplierId = parseInt(req.params.supplierId);
+    console.log(`Looking for supplier with ID: ${supplierId}`);
+
+    const supplier = await Supplier.findOne({ supplierId })
+      .select(
+        "name email category phoneNumber companyName location supplierId avatar"
+      )
+      .lean();
+
+    console.log("Raw supplier data from DB:", supplier);
+
+    if (!supplier) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Supplier not found" });
+    }
+
+    // Rest of your code...
+  } catch (err) {
+    console.error("Error fetching supplier:", err);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
 module.exports = router;
