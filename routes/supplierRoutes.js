@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 const Supplier = require("../models/Supplier");
 const CustomerRequirement = require("../models/CustomerRequirement");
+const Customer = require("../models/Customer");
 
 const router = express.Router();
 
@@ -133,6 +134,67 @@ router.put("/orders/respond", async (req, res) => {
   } catch (error) {
     console.error("❌ Error updating order:", error);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Add this to your server routes
+router.post("/api/suppliers/customers", async (req, res) => {
+  try {
+    const { emails } = req.body;
+
+    if (!emails || !Array.isArray(emails)) {
+      return res.status(400).json({
+        success: false,
+        message: "Emails array is required",
+      });
+    }
+
+    const customers = await Customer.find({ email: { $in: emails } })
+      .select("customer_id name email phone_number location")
+      .lean();
+
+    res.json({
+      success: true,
+      data: customers,
+    });
+  } catch (error) {
+    console.error("Error fetching customers:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch customers",
+      error: error.message,
+    });
+  }
+});
+
+// Get customers by emails
+router.post("/customers", async (req, res) => {
+  try {
+    const { emails } = req.body;
+
+    if (!emails || !Array.isArray(emails)) {
+      return res.status(400).json({
+        success: false,
+        message: "Emails array is required",
+      });
+    }
+
+    // Find customers with matching emails
+    const customers = await Customer.find({ email: { $in: emails } })
+      .select("customer_id name email phone_number location")
+      .lean();
+
+    res.json({
+      success: true,
+      data: customers,
+    });
+  } catch (error) {
+    console.error("Error fetching customers:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch customers",
+      error: error.message,
+    });
   }
 });
 

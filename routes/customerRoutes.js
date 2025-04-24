@@ -720,32 +720,165 @@ router.get("/order-stats/:customer_id", async (req, res) => {
   }
 });
 
-// GET /api/supplier/by-number/:supplierId
-// GET /api/supplier/by-number/:supplierId
-// In your backend route file
-router.get("/by-number/:supplierId", async (req, res) => {
+// // GET /api/supplier/by-number/:supplierId
+// // GET /api/supplier/by-number/:supplierId
+// // In your backend route file
+// router.get("/by-number/:supplierId", async (req, res) => {
+//   try {
+//     const supplierId = parseInt(req.params.supplierId);
+//     console.log(`Looking for supplier with ID: ${supplierId}`);
+
+//     const supplier = await Supplier.findOne({ supplierId })
+//       .select(
+//         "name email category phoneNumber companyName location supplierId avatar"
+//       )
+//       .lean();
+
+//     console.log("Raw supplier data from DB:", supplier);
+
+//     if (!supplier) {
+//       return res
+//         .status(404)
+//         .json({ success: false, error: "Supplier not found" });
+//     }
+
+//     // Rest of your code...
+//   } catch (err) {
+//     console.error("Error fetching supplier:", err);
+//     res.status(500).json({ success: false, error: "Server error" });
+//   }
+// });
+
+// // Get supplier by ID (customer accessible)
+// // Get supplier by ID (customer accessible)
+// // Route: GET /api/customer/supplier/by-number/:supplierId
+// // Updated backend route (in your Node.js server)
+// router.get("/supplier/by-number/:supplierId", async (req, res) => {
+//   try {
+//     const supplierId = parseInt(req.params.supplierId);
+
+//     if (isNaN(supplierId)) {
+//       return res.status(400).json({
+//         success: false,
+//         error: "Invalid supplier ID",
+//       });
+//     }
+
+//     // Find supplier with all required fields
+//     const supplier = await Supplier.findOne({
+//       supplierId: supplierId,
+//     }).select(
+//       "supplierId name email category phoneNumber companyName location"
+//     );
+
+//     if (!supplier) {
+//       return res.status(404).json({
+//         success: false,
+//         error: "Supplier not found",
+//       });
+//     }
+
+//     // Ensure all required fields exist
+//     const responseData = {
+//       supplierId: supplier.supplierId,
+//       name: supplier.name,
+//       email: supplier.email,
+//       category: supplier.category || "Not specified",
+//       phoneNumber: supplier.phoneNumber || "Not provided",
+//       companyName: supplier.companyName || supplier.company || "Not available",
+//       location: supplier.location || "Not specified",
+//     };
+
+//     res.status(200).json({
+//       success: true,
+//       data: responseData,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching supplier:", error);
+//     res.status(500).json({
+//       success: false,
+//       error: "Internal server error",
+//     });
+//   }
+// });
+
+// // Fetch supplier details by ID
+// // Fetch supplier details by ID
+// // Backend route
+// router.get("/supplier/:id", async (req, res) => {
+//   try {
+//     const supplier = await Supplier.findOne({
+//       $or: [{ supplierId: req.params.id }, { _id: req.params.id }],
+//     }).select("-password");
+
+//     if (!supplier) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Supplier not found",
+//       });
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       data: {
+//         id: supplier._id,
+//         supplierId: supplier.supplierId,
+//         name: supplier.name,
+//         email: supplier.email,
+//         category: supplier.category,
+//         phoneNumber: supplier.phoneNumber,
+//         companyName: supplier.companyName,
+//         location: supplier.location,
+//       },
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Server error",
+//     });
+//   }
+// });
+
+// // Add this to your routes file
+// router.get("/supplier-full/:supplierId", async (req, res) => {
+//   try {
+//     const supplier = await Supplier.findOne({
+//       supplierId: Number(req.params.supplierId),
+//     });
+
+//     if (!supplier) {
+//       return res.status(404).json({ error: "Supplier not found" });
+//     }
+
+//     // Convert Mongoose document to plain object
+//     const supplierData = supplier.toObject();
+
+//     // Remove sensitive/unwanted fields
+//     delete supplierData.password;
+//     delete supplierData.__v;
+
+//     res.json(supplierData);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Server error" });
+//   }
+// });
+
+router.get("/supplier/simple/:supplierId", async (req, res) => {
   try {
-    const supplierId = parseInt(req.params.supplierId);
-    console.log(`Looking for supplier with ID: ${supplierId}`);
-
-    const supplier = await Supplier.findOne({ supplierId })
-      .select(
-        "name email category phoneNumber companyName location supplierId avatar"
-      )
-      .lean();
-
-    console.log("Raw supplier data from DB:", supplier);
+    const supplier = await Supplier.findOne({
+      supplierId: Number(req.params.supplierId),
+    }).select("-password -__v");
 
     if (!supplier) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Supplier not found" });
+      return res.status(404).json({ error: "Supplier not found" });
     }
 
-    // Rest of your code...
-  } catch (err) {
-    console.error("Error fetching supplier:", err);
-    res.status(500).json({ success: false, error: "Server error" });
+    res.json(supplier);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

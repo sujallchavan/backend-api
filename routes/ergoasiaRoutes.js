@@ -301,6 +301,4 @@ router.put("/suppliers/:id", async (req, res) => {
   }
 });
 
-// Add this to your routes file (manufacturerRoutes.js or similar)
-
 module.exports = router;
