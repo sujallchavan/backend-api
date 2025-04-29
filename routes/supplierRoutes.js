@@ -198,4 +198,47 @@ router.post("/customers", async (req, res) => {
   }
 });
 
+// Add this to your server routes
+// Add this PUT endpoint
+router.put("/update-final-approval/:order_id", async (req, res) => {
+  try {
+    const { isFinalApproved } = req.body;
+    const orderId = req.params.order_id;
+
+    if (typeof isFinalApproved !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid approval status format",
+      });
+    }
+
+    const approvalStatus = isFinalApproved ? "Approved" : "Disapproved";
+
+    const updatedOrder = await CustomerRequirement.findOneAndUpdate(
+      { order_id: Number(orderId) },
+      { isFinalApproved: approvalStatus },
+      { new: true }
+    );
+
+    if (!updatedOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Final approval status updated successfully",
+      order: updatedOrder,
+    });
+  } catch (error) {
+    console.error("Error updating final approval status:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+});
+
 module.exports = router;

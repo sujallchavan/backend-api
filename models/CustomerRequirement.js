@@ -36,6 +36,11 @@ const CustomerRequirementSchema = new mongoose.Schema({
     enum: ["Approved", "Disapproved"],
     default: "Disapproved",
   },
+  isFinalApproved: {
+    type: String,
+    enum: ["Approved", "Disapproved"],
+    default: "Disapproved",
+  },
   isSupplierAccepted: {
     type: Boolean,
     default: false,

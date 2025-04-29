@@ -51,6 +51,46 @@ router.put("/update-approval/:order_id", async (req, res) => {
   }
 });
 
+// In your Node.js backend routes file
+router.put("/complete-order/:order_id", async (req, res) => {
+  console.log("Received PUT to complete-order with ID:", req.params.order_id);
+  try {
+    const { order_id } = req.params;
+
+    // Validate the order exists and is final approved
+    const order = await CustomerRequirement.findOne({
+      order_id: order_id,
+      isFinalApproved: "Approved",
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found or not final approved",
+      });
+    }
+
+    // Update working status to "Completed"
+    const updatedOrder = await CustomerRequirement.findOneAndUpdate(
+      { order_id: order_id },
+      { $set: { working_status: "Completed" } },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      message: "Order marked as completed",
+      order: updatedOrder,
+    });
+  } catch (error) {
+    console.error("Error completing order:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error completing order",
+    });
+  }
+});
+
 // 🔑 LOGIN ROUTE (No bcrypt)
 // ✅ Login Route with Session
 router.post("/login", async (req, res) => {
