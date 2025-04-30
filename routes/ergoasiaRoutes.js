@@ -381,4 +381,41 @@ router.put("/suppliers/:id", async (req, res) => {
   }
 });
 
+// Add this to your routes file
+router.get("/suppliers-by-id/:supplierId", async (req, res) => {
+  try {
+    const supplier = await Supplier.findOne({
+      supplier_id: req.params.supplierId,
+    });
+    if (!supplier) {
+      return res.status(404).json({ message: "Supplier not found" });
+    }
+    res.json(supplier);
+  } catch (error) {
+    console.error("Error fetching supplier:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// In your routes file (ergoasiaRoutes.js)
+router.get("/suppliers/:supplierId", async (req, res) => {
+  try {
+    const supplier = await Supplier.findOne({
+      supplierId: req.params.supplierId,
+    });
+
+    if (!supplier) {
+      return res.status(404).json({ message: "Supplier not found" });
+    }
+
+    // Remove password before sending response
+    const supplierData = supplier.toObject();
+    delete supplierData.password;
+
+    res.json(supplierData);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;
