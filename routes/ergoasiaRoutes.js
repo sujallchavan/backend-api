@@ -418,4 +418,40 @@ router.get("/suppliers/:supplierId", async (req, res) => {
   }
 });
 
+// GET supplier details by ID
+router.get("/supplier/simple/:supplierId", async (req, res) => {
+  try {
+    const supplierId = Number(req.params.supplierId);
+
+    if (isNaN(supplierId)) {
+      return res.status(400).json({ error: "Invalid supplier ID format" });
+    }
+
+    const supplier = await Supplier.findOne({ supplierId }).select(
+      "-password -__v -createdAt"
+    ); // Exclude sensitive/unnecessary fields
+
+    if (!supplier) {
+      return res.status(404).json({ error: "Supplier not found" });
+    }
+
+    // Format response to match your exact model fields
+    const response = {
+      _id: supplier._id,
+      supplierId: supplier.supplierId,
+      companyName: supplier.companyName,
+      contactPerson: supplier.name, // Using 'name' field from your model
+      email: supplier.email,
+      phoneNumber: supplier.phoneNumber, // Using 'phoneNumber' from your model
+      address: supplier.location, // Using 'location' as address
+      category: supplier.category, // Added category from your model
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error("Error fetching supplier:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 module.exports = router;

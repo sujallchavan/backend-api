@@ -882,4 +882,14 @@ router.get("/supplier/simple/:supplierId", async (req, res) => {
   }
 });
 
+// Backend route (Node.js/Express example)
+router.get("/customer-requirements/count", async (req, res) => {
+  try {
+    const count = await CustomerRequirement.countDocuments();
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 module.exports = router;
