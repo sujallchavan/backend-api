@@ -4,12 +4,58 @@ const LoginHistory = require("../models/loginHistory");
 const Supplier = require("../models/Supplier");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs"); // Added fs module
 
 const Manufacturer = require("../models/Manufacturer"); // Adjust path if needed
-
 const CustomerRequirement = require("../models/CustomerRequirement");
 
 const router = express.Router();
+
+// Configure uploads directory
+const uploadsDir = path.join(__dirname, "../../uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Multer configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+// Create upload middleware
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
+
+// Add file download endpoint
+router.get("/download/:filename", (req, res) => {
+  const file = path.join(uploadsDir, req.params.filename);
+
+  // Check if file exists
+  if (!fs.existsSync(file)) {
+    return res.status(404).json({
+      success: false,
+      message: "File not found",
+    });
+  }
+
+  // Set proper headers for download
+  res.download(file, (err) => {
+    if (err) {
+      console.error("Download error:", err);
+      res.status(500).json({
+        success: false,
+        message: "Error downloading file",
+      });
+    }
+  });
+});
 
 // Add this before any other middleware
 router.post("/accept-supplier-response", async (req, res) => {
@@ -195,18 +241,6 @@ router.get("/all", async (req, res) => {
   }
 });
 
-// Configure Multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/"); // Store files in 'uploads/' directory
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-
-const upload = multer({ storage: storage });
-
 const generateOrderId = async () => {
   let orderId;
   let isUnique = false;
@@ -225,13 +259,20 @@ const generateOrderId = async () => {
   return orderId;
 };
 
+// POST endpoint for submitting customer requirements with file upload
 router.post(
   "/submit-requirement",
   upload.single("pdf_file"),
   async (req, res) => {
     try {
-      console.log("Received Data:", req.body); // Debugging line
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: "No file uploaded",
+        });
+      }
 
+      // Extract data from request body
       const {
         cname,
         customer_id,
@@ -248,18 +289,20 @@ router.post(
         av,
         qs,
         sop,
-        working_status,
+        working_status = "Pending",
       } = req.body;
 
-      if (!phone_number) {
-        return res.status(400).json({ error: "Phone number is required" });
+      // Basic validation
+      if (!cname || !customer_id || !email || !phone_number) {
+        return res.status(400).json({
+          success: false,
+          message: "Required fields are missing",
+        });
       }
 
-      const pdf_file = req.file ? req.file.path : "";
-      const order_id = Math.floor(100 + Math.random() * 900);
-
+      // Create new requirement document
       const newRequirement = new CustomerRequirement({
-        order_id,
+        order_id: Math.floor(1000 + Math.random() * 9000),
         customer_id,
         cname,
         pname,
@@ -273,20 +316,30 @@ router.post(
         blank_name,
         pr,
         av,
-        qs,
-        sop,
+        qs: new Date(qs),
+        sop: new Date(sop),
         working_status,
-        pdf_file,
+        pdf_file: `/api/customer/download/${path.basename(req.file.path)}`, // Store download URL
+        createdAt: new Date(),
       });
 
       await newRequirement.save();
 
-      res
-        .status(201)
-        .json({ message: "Customer requirement saved successfully", order_id });
+      res.status(201).json({
+        success: true,
+        message: "Customer requirement submitted successfully",
+        data: {
+          order_id: newRequirement.order_id,
+          file_path: newRequirement.pdf_file,
+        },
+      });
     } catch (error) {
-      console.error("Error saving requirement:", error);
-      res.status(500).json({ error: "Failed to save requirement" });
+      console.error("Error submitting requirement:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to submit requirement",
+        error: error.message,
+      });
     }
   }
 );
@@ -378,9 +431,6 @@ router.get("/orders/:customer_id", async (req, res) => {
   }
 });
 
-// Add this route to your existing routes
-// Add this route to your existing routes (replace the existing one)
-// Add this route to handle approved orders
 // Add this route to handle approved orders
 router.get("/approved-orders/:customer_id", async (req, res) => {
   try {
@@ -411,9 +461,6 @@ router.get("/approved-orders/:customer_id", async (req, res) => {
 });
 
 // Update order endpoint
-// Add this to your backend routes
-// Update order endpoint
-// Add this route to handle order updates
 router.put("/order/:order_id", async (req, res) => {
   try {
     const orderId = req.params.order_id;
@@ -622,12 +669,6 @@ router.get("/supplier/by-number/:supplierId", async (req, res) => {
   }
 });
 
-// Add this to your existing routes in customer.js
-
-// Get orders by category for a specific customer
-// Add this to your existing routes in customer.js
-
-// Get orders by category for a specific customer
 // Get orders by category for a specific customer
 router.get("/orders-by-category/:customer_id/:category", async (req, res) => {
   try {
@@ -719,151 +760,6 @@ router.get("/order-stats/:customer_id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch order stats" });
   }
 });
-
-// // GET /api/supplier/by-number/:supplierId
-// // GET /api/supplier/by-number/:supplierId
-// // In your backend route file
-// router.get("/by-number/:supplierId", async (req, res) => {
-//   try {
-//     const supplierId = parseInt(req.params.supplierId);
-//     console.log(`Looking for supplier with ID: ${supplierId}`);
-
-//     const supplier = await Supplier.findOne({ supplierId })
-//       .select(
-//         "name email category phoneNumber companyName location supplierId avatar"
-//       )
-//       .lean();
-
-//     console.log("Raw supplier data from DB:", supplier);
-
-//     if (!supplier) {
-//       return res
-//         .status(404)
-//         .json({ success: false, error: "Supplier not found" });
-//     }
-
-//     // Rest of your code...
-//   } catch (err) {
-//     console.error("Error fetching supplier:", err);
-//     res.status(500).json({ success: false, error: "Server error" });
-//   }
-// });
-
-// // Get supplier by ID (customer accessible)
-// // Get supplier by ID (customer accessible)
-// // Route: GET /api/customer/supplier/by-number/:supplierId
-// // Updated backend route (in your Node.js server)
-// router.get("/supplier/by-number/:supplierId", async (req, res) => {
-//   try {
-//     const supplierId = parseInt(req.params.supplierId);
-
-//     if (isNaN(supplierId)) {
-//       return res.status(400).json({
-//         success: false,
-//         error: "Invalid supplier ID",
-//       });
-//     }
-
-//     // Find supplier with all required fields
-//     const supplier = await Supplier.findOne({
-//       supplierId: supplierId,
-//     }).select(
-//       "supplierId name email category phoneNumber companyName location"
-//     );
-
-//     if (!supplier) {
-//       return res.status(404).json({
-//         success: false,
-//         error: "Supplier not found",
-//       });
-//     }
-
-//     // Ensure all required fields exist
-//     const responseData = {
-//       supplierId: supplier.supplierId,
-//       name: supplier.name,
-//       email: supplier.email,
-//       category: supplier.category || "Not specified",
-//       phoneNumber: supplier.phoneNumber || "Not provided",
-//       companyName: supplier.companyName || supplier.company || "Not available",
-//       location: supplier.location || "Not specified",
-//     };
-
-//     res.status(200).json({
-//       success: true,
-//       data: responseData,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching supplier:", error);
-//     res.status(500).json({
-//       success: false,
-//       error: "Internal server error",
-//     });
-//   }
-// });
-
-// // Fetch supplier details by ID
-// // Fetch supplier details by ID
-// // Backend route
-// router.get("/supplier/:id", async (req, res) => {
-//   try {
-//     const supplier = await Supplier.findOne({
-//       $or: [{ supplierId: req.params.id }, { _id: req.params.id }],
-//     }).select("-password");
-
-//     if (!supplier) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Supplier not found",
-//       });
-//     }
-
-//     res.status(200).json({
-//       success: true,
-//       data: {
-//         id: supplier._id,
-//         supplierId: supplier.supplierId,
-//         name: supplier.name,
-//         email: supplier.email,
-//         category: supplier.category,
-//         phoneNumber: supplier.phoneNumber,
-//         companyName: supplier.companyName,
-//         location: supplier.location,
-//       },
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Server error",
-//     });
-//   }
-// });
-
-// // Add this to your routes file
-// router.get("/supplier-full/:supplierId", async (req, res) => {
-//   try {
-//     const supplier = await Supplier.findOne({
-//       supplierId: Number(req.params.supplierId),
-//     });
-
-//     if (!supplier) {
-//       return res.status(404).json({ error: "Supplier not found" });
-//     }
-
-//     // Convert Mongoose document to plain object
-//     const supplierData = supplier.toObject();
-
-//     // Remove sensitive/unwanted fields
-//     delete supplierData.password;
-//     delete supplierData.__v;
-
-//     res.json(supplierData);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error: "Server error" });
-//   }
-// });
 
 router.get("/supplier/simple/:supplierId", async (req, res) => {
   try {

@@ -5,6 +5,7 @@ const connectDB = require("./config/db");
 const cors = require("cors");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
+const path = require("path");
 
 require("dotenv").config();
 
@@ -31,7 +32,7 @@ app.use(
 );
 
 app.use(express.json());
-app.use("/uploads", express.static("uploads")); // Serve uploaded files
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(express.urlencoded({ extended: true }));
 
 // ✅ Secure Session Configuration
