@@ -5,6 +5,14 @@ const Manufacturer = require("../models/Manufacturer"); // Ensure the correct pa
 const Customer = require("../models/Customer");
 const Supplier = require("../models/Supplier");
 const mongoose = require("mongoose");
+const path = require("path");
+const fs = require("fs");
+
+// Configure uploads directory
+const uploadsDir = path.join(__dirname, "../../uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // Route to fetch all customer requirements
 router.get("/customer-requirements", async (req, res) => {
@@ -451,6 +459,43 @@ router.get("/supplier/simple/:supplierId", async (req, res) => {
   } catch (error) {
     console.error("Error fetching supplier:", error);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+// File download endpoint
+router.get("/download/:filename", (req, res) => {
+  try {
+    const filename = req.params.filename;
+    // Extract just the filename part (in case full path was stored)
+    const baseFilename = path.basename(filename);
+    const filePath = path.join(uploadsDir, baseFilename);
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: "File not found",
+      });
+    }
+
+    // Set proper headers for download
+    res.download(filePath, baseFilename, (err) => {
+      if (err) {
+        console.error("Download error:", err);
+        if (!res.headersSent) {
+          res.status(500).json({
+            success: false,
+            message: "Error downloading file",
+          });
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Download route error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 });
 
