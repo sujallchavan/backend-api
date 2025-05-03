@@ -15,20 +15,28 @@ const app = express();
 connectDB().catch((err) => console.error("MongoDB Connection Error:", err));
 
 // ✅ Updated CORS Configuration
+// Update your CORS middleware to this:
 app.use(
   cors({
     origin: [
       "http://127.0.0.1:5500",
       "http://localhost:5500",
       "http://127.0.0.1:5512",
+      "http://localhost:5512", // Add this for consistency
       "https://customerergoasia.netlify.app",
       "https://manufacturerfrontend.netlify.app",
       "https://supplyerergoasia.netlify.app",
-      "https://backend-api-y55a.onrender.com", // ✅ Added Netlify frontend
     ],
-    credentials: true, // ✅ Allow credentials (cookies, sessions)
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // ✅ Allowed methods
-    allowedHeaders: ["Content-Type", "Authorization"], // ✅ Allowed headers
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+    ],
+    exposedHeaders: ["Set-Cookie", "Date", "ETag"],
+    optionsSuccessStatus: 200, // Some legacy browsers choke on 204
   })
 );
 
