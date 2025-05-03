@@ -33,7 +33,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 });
 
-// Add file download endpoint
+// In your routes file (where you have the download endpoint)
 router.get("/download/:filename", (req, res) => {
   const file = path.join(uploadsDir, req.params.filename);
 
@@ -319,7 +319,9 @@ router.post(
         qs: new Date(qs),
         sop: new Date(sop),
         working_status,
-        pdf_file: `/api/customer/download/${path.basename(req.file.path)}`, // Store download URL
+        pdf_file: `https://backend-api-y55a.onrender.com/api/customer/download/${path.basename(
+          req.file.path
+        )}`, // Store download URL
         createdAt: new Date(),
       });
 
